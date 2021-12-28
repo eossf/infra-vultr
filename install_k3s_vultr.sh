@@ -59,7 +59,7 @@ echo "OSID           = $osid"
 echo "NODELIST       = $nodelist"
 echo "VM master      = $plan_master"
 echo "VM node        = $plan_node"
-
+echo " ----------------------------"
 echo "Get private network list"
 APN=`curl -s "https://api.vultr.com/v2/private-networks" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.networks[].id' | tr -d '"'`
 if [[ $APN == "" ]]; then 
@@ -76,11 +76,12 @@ if [[ $APN == "" ]]; then
     }' | jq '.network.id' | tr -d '"'`
 fi
 echo "VPN id : $APN"
-
+echo " ----------------------------"
 echo "Get SSH key for accessing servers"
 SSHKEY_ID=`curl -s "https://api.vultr.com/v2/ssh-keys"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.ssh_keys[].id' | tr -d '"'`
 
 echo "Create masters and nodes"
+echo " ----------------------------"
 for node in $nodelist
 do
   if [[ ${node} =~ "MASTER" ]]; then
@@ -105,6 +106,7 @@ DATA='{"region":"'$region'",
 done
 
 echo "Wait provisionning finishes ..."
+echo " ----------------------------"
 sleep $((30+(number_master+number_node)*10))
 echo
 
@@ -154,3 +156,76 @@ for t in ${NODES_COUNT[@]}; do
     fi
   fi
 done
+
+echo "Prepare files for Ansible ..."
+echo " ----------------------------"
+
+cp -f inventory-k3s.tmpl inventory.yml
+echo "" > kube_master.yml
+echo "" > kube_node.yml
+
+# get info back for ansible provisionning
+NODES=`curl "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
+NODE_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
+NODE_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
+NODE_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
+
+HOSTNAME=()
+i=0
+for t in ${NODE_LABEL[@]}; do
+  HOSTNAME[$i]=$t
+  ((i++))
+done
+
+i=0
+for ip in $NODE_MAIN_IP
+do
+    if valid_ip $ip; then 
+        if [[ $ip == "0.0.0.0" ]]; then
+            stat='bad'
+        else
+            stat='good'
+            echo ${HOSTNAME[$i]}
+            if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
+echo '
+            #KUBE_MASTER_HOSTNAME:
+              ansible_host: #KUBE_MASTER_MAIN_IP
+              ansible_ssh_user: "root"
+              ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
+              ansible_become: true
+              ansible_become_user: "root"
+' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> kube_master.yml
+            fi
+            if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
+echo '
+            #KUBE_NODE_HOSTNAME:
+              ansible_host: #KUBE_NODE_MAIN_IP
+              ansible_ssh_user: "root"
+              ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
+              ansible_become: true
+              ansible_become_user: "root"
+' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODE_MAIN_IP/'$ip'/g' >> kube_node.yml
+            fi
+        fi
+    else
+        stat='bad';
+    fi
+
+    ((i=i+1))
+done
+
+# subsitute all
+echo '
+        kube_master:
+          hosts:
+' >> inventory.yml
+cat kube_master.yml >> inventory.yml
+
+echo '
+        kube_node:
+          hosts:
+' >> inventory.yml
+cat kube_node.yml >> inventory.yml
+
+echo
+echo "End of script"
