@@ -43,22 +43,25 @@ function valid_ip()
 {
     local  ip=$1
     local  stat=1
-    if [[ $NODE_MAIN_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
         OIFS=$IFS
         IFS='.'
-        ip=($NODE_MAIN_IP)
+        ip=($ip)
         IFS=$OIFS
-        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
         stat=$?
     fi
     return $stat
 }
 
 echo " ----------------------------"
-echo "OSID           = $osid"
-echo "NODELIST       = $nodelist"
-echo "VM master      = $plan_master"
-echo "VM node        = $plan_node"
+echo "OSID             = $osid"
+echo "NODELIST         = $nodelist"
+echo "VM master        = $plan_master"
+echo "VM node          = $plan_node"
+
 echo " ----------------------------"
 echo "Get private network list"
 APN=`curl -s "https://api.vultr.com/v2/private-networks" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.networks[].id' | tr -d '"'`
@@ -160,7 +163,7 @@ done
 echo "Prepare files for Ansible ..."
 echo " ----------------------------"
 
-cp -f inventory-k3s.tmpl inventory.yml
+cp -f inventory-ansible.tmpl inventory.yml
 echo "" > kube_master.yml
 echo "" > kube_node.yml
 
@@ -170,62 +173,61 @@ NODE_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
 NODE_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
 NODE_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
 
+echo "NODE             = $NODE"
+echo "NODE_LABEL       = $NODE_LABEL"
+echo "NODE_MAIN_IP     = $NODE_MAIN_IP"
+echo "NODE_INTERNAL_IP = $NODE_INTERNAL_IP"
+
+echo "Display hosts"
+echo " ----------------------------"
 HOSTNAME=()
 i=0
 for t in ${NODE_LABEL[@]}; do
   HOSTNAME[$i]=$t
+  echo "Host : $t"
   ((i++))
 done
 
+echo "Print inventory.yml"
+echo " ----------------------------"
 i=0
 for ip in $NODE_MAIN_IP
 do
-    if valid_ip $ip; then 
+    echo "Public ip:$ip"
+    if valid_ip $ip; then
         if [[ $ip == "0.0.0.0" ]]; then
             stat='bad'
         else
             stat='good'
-            echo ${HOSTNAME[$i]}
+            echo "Host:${HOSTNAME[$i]}"
             if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
-echo '
-            #KUBE_MASTER_HOSTNAME:
-              ansible_host: #KUBE_MASTER_MAIN_IP
-              ansible_ssh_user: "root"
-              ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
-              ansible_become: true
-              ansible_become_user: "root"
-' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> kube_master.yml
+echo '    #KUBE_MASTER_HOSTNAME:
+      ansible_host: #KUBE_MASTER_MAIN_IP
+      ansible_ssh_user: "root"
+      ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
+      ansible_become: true
+      ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> kube_master.yml
             fi
             if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
-echo '
-            #KUBE_NODE_HOSTNAME:
-              ansible_host: #KUBE_NODE_MAIN_IP
-              ansible_ssh_user: "root"
-              ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
-              ansible_become: true
-              ansible_become_user: "root"
-' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODE_MAIN_IP/'$ip'/g' >> kube_node.yml
+echo '    #KUBE_NODE_HOSTNAME:
+      ansible_host: #KUBE_NODE_MAIN_IP
+      ansible_ssh_user: "root"
+      ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
+      ansible_become: true
+      ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODE_MAIN_IP/'$ip'/g' >> kube_node.yml
             fi
         fi
     else
         stat='bad';
     fi
 
+    echo "Result inventory for host = $stat"
     ((i=i+1))
 done
 
 # subsitute all
-echo '
-        kube_master:
-          hosts:
-' >> inventory.yml
-cat kube_master.yml >> inventory.yml
-
-echo '
-        kube_node:
-          hosts:
-' >> inventory.yml
-cat kube_node.yml >> inventory.yml
+cat -s kube_master.yml >> inventory.yml
+cat -s kube_node.yml >> inventory.yml
 
 echo
 echo "End of script"

@@ -1,0 +1,5 @@
+- hosts: k3s_nodes
+  vars:
+    k3s_release_version: testing
+  roles:
+    - role: xanmanning.k3s
