@@ -1,19 +1,21 @@
 #!/bin/bash
 
 # default value
-DEFAULTNODELIST="MASTER01 MASTER02 MASTER03 NODE01 NODE02 NODE03"
+DEFAULTNODELIST="CONSOLE01 MASTER01 MASTER02 MASTER03 NODE01 NODE02 NODE03"
 
 # ubuntu 21.10
 UBUNTU="517"
 
 # centos8 x64
 CENTOS="362"
+plan_console="vc2-1c-2gb"
 plan_master="vc2-2c-4gb"
 plan_node="vc2-1c-2gb"
 osid=$UBUNTU
 region="cdg"
 number_node=0
 number_master=0
+number_console=0
 
 # --- params ---
 nodelist="$1"
@@ -87,10 +89,15 @@ echo "Create masters and nodes"
 echo " ----------------------------"
 for node in $nodelist
 do
+  if [[ ${node} =~ "CONSOLE" ]]; then
+    plan=$plan_console
+    number_console=$((number_console++))
+  fi
   if [[ ${node} =~ "MASTER" ]]; then
     plan=$plan_master
     number_master=$((number_master++))
-  else
+  fi
+  if [[ ${node} =~ "NODE" ]]; then 
     plan=$plan_node
     number_node=$((number_node++))
   fi
@@ -119,44 +126,41 @@ NODES_COUNT=`echo $NODES | jq '.instances' | grep -i '"id"' | tr -d "," | cut -d
 for t in ${NODES_COUNT[@]}; do
   NODE=`curl -s "https://api.vultr.com/v2/instances/${t}" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
   NODE_LABEL=`echo $NODE | jq '.instance.label' | tr -d '"'`
-  if [[ $NODE_LABEL =~ "MASTER" || $NODE_LABEL =~ "NODE" ]]; then
-    NODE_INTERNAL_IP=`echo $NODE | jq '.instance.internal_ip' | tr -d '"'`
-    NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
-
-    if [[ $osid == "$CENTOS" ]]; then
-      echo "CentOS Linux detected"
-      ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > /tmp/ITF"
-      scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
-      ITF=`cat /tmp/ITF`
-      rm /tmp/ITF
-      echo "Capture itf name :"$ITF
-      cp -f ifcfg.tmpl ifcfg-$ITF
-      echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-      sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' ifcfg-$ITF
-      sed -i 's/#ITF#/'$ITF'/g' ifcfg-$ITF
-      scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" ./ifcfg-$ITF root@"$NODE_MAIN_IP":/etc/sysconfig/network-scripts/ifcfg-$ITF
-      ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/ifcfg-"$ITF
-      ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'" 
-      fi
-    if [[ $osid == "$UBUNTU" ]]; then
-      echo "Ubuntu Linux detected"
-      ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > /tmp/MAC"
-      ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > /tmp/ITF"
-      scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/MAC /tmp/MAC
-      scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
-      MAC=`cat /tmp/MAC`
-      rm /tmp/MAC
-      ITF=`cat /tmp/ITF`
-      rm /tmp/ITF
-      echo "Capture itf name :"$ITF
-      cp -f netplan.tmpl 10-$ITF.yaml
-      echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-      sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' 10-$ITF.yaml
-      sed -i 's/#ITF#/'$ITF'/g' 10-$ITF.yaml
-      sed -i 's/#MAC#/'$MAC'/g' 10-$ITF.yaml
-      scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" ./10-$ITF.yaml root@"$NODE_MAIN_IP":/etc/netplan/10-$ITF.yaml
-      ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "netplan apply" 
+  NODE_INTERNAL_IP=`echo $NODE | jq '.instance.internal_ip' | tr -d '"'`
+  NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
+  if [[ $osid == "$CENTOS" ]]; then
+    echo "CentOS Linux detected"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > /tmp/ITF"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
+    ITF=`cat /tmp/ITF`
+    rm /tmp/ITF
+    echo "Capture itf name :"$ITF
+    cp -f ifcfg.tmpl ifcfg-$ITF
+    echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' ifcfg-$ITF
+    sed -i 's/#ITF#/'$ITF'/g' ifcfg-$ITF
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" ./ifcfg-$ITF root@"$NODE_MAIN_IP":/etc/sysconfig/network-scripts/ifcfg-$ITF
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/ifcfg-"$ITF
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'" 
     fi
+  if [[ $osid == "$UBUNTU" ]]; then
+    echo "Ubuntu Linux detected"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > /tmp/MAC"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > /tmp/ITF"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/MAC /tmp/MAC
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
+    MAC=`cat /tmp/MAC`
+    rm /tmp/MAC
+    ITF=`cat /tmp/ITF`
+    rm /tmp/ITF
+    echo "Capture itf name :"$ITF
+    cp -f netplan.tmpl 10-$ITF.yaml
+    echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' 10-$ITF.yaml
+    sed -i 's/#ITF#/'$ITF'/g' 10-$ITF.yaml
+    sed -i 's/#MAC#/'$MAC'/g' 10-$ITF.yaml
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" ./10-$ITF.yaml root@"$NODE_MAIN_IP":/etc/netplan/10-$ITF.yaml
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "netplan apply" 
   fi
 done
 
@@ -204,7 +208,7 @@ do
 echo '    #KUBE_MASTER_HOSTNAME:
       ansible_host: #KUBE_MASTER_MAIN_IP
       ansible_ssh_user: "root"
-      ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
+      ansible_ssh_private_key_file: "~/.ssh/id_rsa"
       ansible_become: true
       ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> kube_master.yml
             fi
@@ -212,7 +216,7 @@ echo '    #KUBE_MASTER_HOSTNAME:
 echo '    #KUBE_NODE_HOSTNAME:
       ansible_host: #KUBE_NODE_MAIN_IP
       ansible_ssh_user: "root"
-      ansible_ssh_private_key_file: "/home/metairie/.ssh/id_rsa"
+      ansible_ssh_private_key_file: "~/.ssh/id_rsa"
       ansible_become: true
       ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODE_MAIN_IP/'$ip'/g' >> kube_node.yml
             fi
