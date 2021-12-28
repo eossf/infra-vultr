@@ -204,6 +204,9 @@ do
         else
             stat='good'
             echo "Host:${HOSTNAME[$i]}"
+            if [[ ${HOSTNAME[$i]}  =~ "CONSOLE" ]]; then
+              echo "Host: ${HOSTNAME[$i]} is not managed by ansible"
+            fi
             if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
 echo '    #KUBE_MASTER_HOSTNAME:
       ansible_host: #KUBE_MASTER_MAIN_IP

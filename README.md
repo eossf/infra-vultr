@@ -1,8 +1,9 @@
 # K3s ansible on Vultr
 
-## Create console VULTR
+## Create console VULTR on your Desktop PC
 ### script creating the console
 ````
+# need jq (apt install jq)
 ./install_k3s_vultr.sh "CONSOLE01"
 ````
 ### copy id_rsa in the console01
@@ -36,5 +37,5 @@ ansible-galaxy install xanmanning.k3s
 ````
 ### deploy k3s cluster
 ````
-ansible-playbook -i inventory.yml cluster.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.yml cluster.yml
 ````
