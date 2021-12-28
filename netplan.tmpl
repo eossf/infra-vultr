@@ -1,0 +1,10 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    #ITF#:
+      match:
+        macaddress: #MAC#
+      mtu: 1450
+      dhcp4: no
+      addresses: [#IPV4#/16]
