@@ -16,6 +16,8 @@ region="cdg"
 number_node=0
 number_master=0
 number_console=0
+file_inventory_master="/tmp/kube_master.yml"
+file_inventory_node="/tmp/kube_node.yml"
 
 # --- params ---
 nodelist="$1"
@@ -184,63 +186,79 @@ for t in ${NODE_LABEL[@]}; do
   ((i++))
 done
 
-function removefile()
+function remove_file()
 {
-  if [ -f "kube_master.yml" ]; then
-    rm kube_master.yml
+  local remove_master=$1
+  local remove_node=$2
+  if [ -f "$remove_master" ]; then
+    rm $remove_master
   fi
-  if [ -f "kube_node.yml" ]; then
-    rm kube_node.yml
+  if [ -f "$remove_node" ]; then
+    rm $remove_node
   fi
 }
 
-echo "Print inventory.yml"
-echo " ----------------------------"
-i=0
-for ip in $NODE_MAIN_IP
-do
-    echo "Public ip:$ip"
-    if valid_ip $ip; then
-        if [[ $ip == "0.0.0.0" ]]; then
-            stat='bad'
-        else
-            stat='good'
-            echo "Host:${HOSTNAME[$i]}"
-            if [[ ${HOSTNAME[$i]}  =~ "CONSOLE" ]]; then
-              echo "Host: ${HOSTNAME[$i]} is not managed by ansible"
-            fi
-            if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
-echo '    #KUBE_MASTER_HOSTNAME:
-      ansible_host: #KUBE_MASTER_MAIN_IP
-      ansible_ssh_user: "root"
-      ansible_ssh_private_key_file: "~/.ssh/id_rsa"
-      ansible_become: true
-      ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> kube_master.yml
-            fi
-            if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
-echo '    #KUBE_NODE_HOSTNAME:
-      ansible_host: #KUBE_NODE_MAIN_IP
-      ansible_ssh_user: "root"
-      ansible_ssh_private_key_file: "~/.ssh/id_rsa"
-      ansible_become: true
-      ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODE_MAIN_IP/'$ip'/g' >> kube_node.yml
-            fi
-        fi
-    else
-        stat='bad';
-    fi
+function create_inventory()
+{
+  local ips=$1
+  local inventory=$2
+  echo "Print out inventory file: $inventory for public ip"
+  echo " ----------------------------"
+  i=0
+  for ip in $ips
+  do
+      echo "Public ip:$ip"
+      if valid_ip $ip; then
+          if [[ $ip == "0.0.0.0" ]]; then
+              stat='bad'
+          else
+              stat='good'
+              echo "Host: ${HOSTNAME[$i]}"
+              if [[ ${HOSTNAME[$i]}  =~ "CONSOLE" ]]; then
+                echo "Host: ${HOSTNAME[$i]} is not managed by ansible"
+                echo "Connection information"
+                echo "scp -i ~/.ssh/id_rsa ~/.ssh/id_rsa root@$ip:~/.ssh/id_rsa"
+                echo "ssh -i ~/.ssh/id_rsa root@$ip"
+                echo
+              fi
+              if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
+  echo '    #KUBE_MASTER_HOSTNAME:
+        ansible_host: #KUBE_MASTER_MAIN_IP
+        ansible_ssh_user: "root"
+        ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+        ansible_become: true
+        ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> /tmp/kube_master.yml
+              fi
+              if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
+  echo '    #KUBE_NODE_HOSTNAME:
+        ansible_host: #KUBE_NODE_MAIN_IP
+        ansible_ssh_user: "root"
+        ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+        ansible_become: true
+        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODE_MAIN_IP/'$ip'/g' >> /tmp/kube_node.yml
+              fi
+          fi
+      else
+          stat='bad';
+      fi
 
-    echo "Result inventory for host = $stat"
-    ((i=i+1))
-done
+      echo "Insertion into $inventory result ${HOSTNAME[$i]} = $stat"
+      ((i=i+1))
+  done
 
-# subsitute all
-if [[ -f "kube_master" ]]; then
-  cp -f inventory-ansible.tmpl inventory.yml
-  cat -s kube_master.yml >> inventory.yml
-  cat -s kube_node.yml >> inventory.yml
-  removefile
-fi
+  # substitute all
+  if [[ -f "$file_inventory_master" ]]; then
+    cp -f inventory-ansible.tmpl $inventory
+    cat -s $file_inventory_master >> $inventory
+    cat -s $file_inventory_node >> $inventory
+    remove_file $file_inventory_master $file_inventory_node
+  fi
+}
+
+# first inventory on pub ips
+create_inventory $NODE_MAIN_IP "inventory-public.yml"
+# second on private ips
+create_inventory $NODE_INTERNAL_IP "inventory-private.yml"
 
 echo
 echo "End of script"

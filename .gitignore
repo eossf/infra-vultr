@@ -3,4 +3,5 @@ kube_master.yml
 kube_node.yml
 ifcfg-*.yaml
 10-.txt*
+inventory-*.yml
 inventory.yml

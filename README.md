@@ -19,7 +19,6 @@ git clone git@github.com:eossf/infra-vultr.git
 cd infra-vultr
 apt install jq
 export  VULTR_API_KEY="YYYY"
-export  K3S_TOKEN="ZZZZ"
 ./install_infra_vultr.sh "MASTER01 NODE01"
 ````
 ### ansible 
