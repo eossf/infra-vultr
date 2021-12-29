@@ -117,7 +117,7 @@ done
 
 echo "Wait provisionning finishes ..."
 echo " ----------------------------"
-sleep $((30+(number_master+number_node)*10))
+sleep $((15+(number_master+number_node)*10))
 echo
 
 echo "Get Nodes and set internal interface "
@@ -195,7 +195,7 @@ function removefile()
   if [ -f "kube_master.yml" ]; then
     rm kube_master.yml
   fi
-  if [ -f "kube_node.yml" ];
+  if [ -f "kube_node.yml" ]; then
     rm kube_node.yml
   fi
 }
