@@ -154,7 +154,7 @@ for t in ${NODES_COUNT[@]}; do
     rm /tmp/MAC
     ITF=`cat /tmp/ITF`
     rm /tmp/ITF
-    netfile="10-$ITF.yaml"
+    netfile="10-$ITF"
     echo "Capture itf name :$netfile"
     cp -f net-ubuntu.tmpl $netfile
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
