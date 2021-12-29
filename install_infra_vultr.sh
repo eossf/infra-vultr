@@ -176,15 +176,6 @@ echo "NODES_LABEL       = $NODES_LABEL"
 echo "NODES_MAIN_IP     = $NODES_MAIN_IP"
 echo "NODES_INTERNAL_IP = $NODES_INTERNAL_IP"
 
-echo "Display hosts"
-echo " ----------------------------"
-HOSTNAME=()
-i=0
-for t in ${NODES_LABEL[@]}; do
-  HOSTNAME[$i]=$t
-  echo "Host : $t"
-  ((i++))
-done
 
 function remove_file()
 {
@@ -202,6 +193,14 @@ function create_inventory()
 {
   local inventory=$1
   local ips=$2
+
+  HOSTNAME=()
+  j=0
+  for t in ${NODES_LABEL[@]}; do
+    HOSTNAME[$j]=$t
+    ((j++))
+  done
+
   echo "Print out inventory file: $inventory for public ip list: $ips"
   echo " ----------------------------"
   i=0
@@ -228,7 +227,7 @@ function create_inventory()
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
         ansible_become: true
-        ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> $file_inventory_master
+        ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> /tmp/kube_master
               fi
               if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
   echo 
@@ -237,7 +236,7 @@ function create_inventory()
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
         ansible_become: true
-        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODES_MAIN_IP/'$ip'/g' >> $file_inventory_node
+        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODES_MAIN_IP/'$ip'/g' >> /tmp/kube_node
               fi
           fi
       else
@@ -245,15 +244,15 @@ function create_inventory()
       fi
 
       echo "Insertion into $inventory result ${HOSTNAME[$i]} = $stat"
-      ((i=i+1))
+      ((i++))
   done
 
   # substitute all
-  if [[ -f "$file_inventory_master" ]]; then
+  if [[ -f "/tmp/kube_master" ]]; then
     cp -f inventory-ansible.tmpl $inventory
-    cat -s $file_inventory_master >> $inventory
-    cat -s $file_inventory_node >> $inventory
-    remove_file $file_inventory_master $file_inventory_node
+    cat -s /tmp/kube_master >> $inventory
+    cat -s /tmp/kube_node >> $inventory
+    #remove_file /tmp/kube_master /tmp/kube_node
   fi
 }
 
