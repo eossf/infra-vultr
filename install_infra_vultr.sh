@@ -200,9 +200,9 @@ function remove_file()
 
 function create_inventory()
 {
-  local ips=$1
-  local inventory=$2
-  echo "Print out inventory file: $inventory for public ip"
+  local inventory=$1
+  local ips=$2
+  echo "Print out inventory file: $inventory for public ip list: $ips"
   echo " ----------------------------"
   i=0
   for ip in $ips
@@ -256,9 +256,9 @@ function create_inventory()
 }
 
 # first inventory on pub ips
-create_inventory $NODES_MAIN_IP "inventory-public.yml"
+create_inventory "inventory-public.yml" "$NODES_MAIN_IP"
 # second on private ips
-create_inventory $NODES_INTERNAL_IP "inventory-private.yml"
+create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
 
 echo
 echo "End of script"
