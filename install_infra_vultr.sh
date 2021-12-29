@@ -138,7 +138,7 @@ for t in ${NODES_COUNT[@]}; do
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $localfile
     sed -i 's/#ITF#/'$ITF'/g' $localfile
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODES_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'"
     fi
@@ -222,7 +222,8 @@ function create_inventory()
                 echo
               fi
               if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
-  echo '    #KUBE_MASTER_HOSTNAME:
+  echo 
+  '    #KUBE_MASTER_HOSTNAME:
         ansible_host: #KUBE_MASTER_MAIN_IP
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
@@ -230,7 +231,8 @@ function create_inventory()
         ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> $file_inventory_master
               fi
               if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
-  echo '    #KUBE_NODE_HOSTNAME:
+  echo 
+  '    #KUBE_NODE_HOSTNAME:
         ansible_host: #KUBE_NODES_MAIN_IP
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
