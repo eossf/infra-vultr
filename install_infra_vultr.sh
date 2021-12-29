@@ -16,8 +16,12 @@ region="cdg"
 number_node=0
 number_master=0
 number_console=0
+
+# temp file
 file_inventory_master="/tmp/kube_master.yml"
 file_inventory_node="/tmp/kube_node.yml"
+file_ITF="/tmp/ITF"
+file_MAC="/tmp/MAC"
 
 # --- params ---
 nodelist="$1"
@@ -124,10 +128,9 @@ for t in ${NODES_COUNT[@]}; do
   NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
   if [[ $osid == "$CENTOS" ]]; then
     echo "CentOS Linux detected"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > /tmp/ITF"
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
-    ITF=`cat /tmp/ITF`
-    rm /tmp/ITF
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > $file_ITF"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_ITF $file_ITF
+    ITF=`cat $file_ITF`
     localfile="ifcfg-$ITF.yaml"
     netfile="ifcfg-$ITF"
     echo "Capture itf name : $localfile"
@@ -141,18 +144,15 @@ for t in ${NODES_COUNT[@]}; do
     fi
   if [[ $osid == "$UBUNTU" ]]; then
     echo "Ubuntu Linux detected"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > /tmp/MAC"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > /tmp/ITF"
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/MAC /tmp/MAC
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
-    MAC=`cat /tmp/MAC`
-    rm /tmp/MAC
-    ITF=`cat /tmp/ITF`
-    rm /tmp/ITF
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > $file_MAC"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > $file_ITF"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_MAC $file_MAC
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_ITF $file_ITF
+    MAC=`cat $file_MAC`
+    ITF=`cat $file_ITF`
     localfile="10-$ITF.txt"
     netfile="10-$ITF"
-    echo "Capture itf name :$netfile"
-    cp -f net-ubuntu.tmpl $netfile
+    cp -f net-ubuntu.tmpl $localfile
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $localfile
     sed -i 's/#ITF#/'$ITF'/g' $localfile
@@ -227,7 +227,7 @@ function create_inventory()
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
         ansible_become: true
-        ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> /tmp/kube_master.yml
+        ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> $file_inventory_master
               fi
               if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
   echo '    #KUBE_NODE_HOSTNAME:
@@ -235,7 +235,7 @@ function create_inventory()
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
         ansible_become: true
-        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODES_MAIN_IP/'$ip'/g' >> /tmp/kube_node.yml
+        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODES_MAIN_IP/'$ip'/g' >> $file_inventory_node
               fi
           fi
       else
