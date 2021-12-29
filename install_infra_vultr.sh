@@ -130,14 +130,14 @@ for t in ${NODES_COUNT[@]}; do
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > $file_ITF"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_ITF $file_ITF
     ITF=`cat $file_ITF`
-    localfile="ifcfg-$ITF.yaml"
+    localfile="/tmp/ifcfg-$ITF.yaml"
     netfile="ifcfg-$ITF"
     echo "Capture itf name : $localfile"
-    cp -f net-centos8.tmpl $localfile
+    cp -f net-centos8.tmpl "$localfile"
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $localfile
-    sed -i 's/#ITF#/'$ITF'/g' $localfile
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
+    sed -i 's/#ITF#/'$ITF'/g' "$localfile"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "$localfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'"
     fi
@@ -149,15 +149,18 @@ for t in ${NODES_COUNT[@]}; do
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_ITF $file_ITF
     MAC=`cat $file_MAC`
     ITF=`cat $file_ITF`
-    localfile="10-$ITF.txt"
+    localfile="/tmp/10-$ITF.txt"
     netfile="10-$ITF"
-    cp -f net-ubuntu.tmpl $localfile
+    cp -f net-ubuntu.tmpl "$localfile"
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $localfile
-    sed -i 's/#ITF#/'$ITF'/g' $localfile
-    sed -i 's/#MAC#/'$MAC'/g' $localfile
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODE_MAIN_IP:/etc/netplan/$netfile"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "netplan apply" 
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
+    sed -i 's/#ITF#/'$ITF'/g' "$localfile"
+    sed -i 's/#MAC#/'$MAC'/g' "$localfile"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "$localfile" root@"$NODE_MAIN_IP:/etc/netplan/$netfile"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "netplan apply"
+  fi
+  if [[ -f "$localfile" ]]; then
+    rm "$localfile"
   fi
 done
 
@@ -261,6 +264,7 @@ create_inventory "inventory-public.yml" "$NODES_MAIN_IP"
 # second on private ips
 remove_file "$file_inventory_master" "$file_inventory_node"
 create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
+
 
 echo
 echo "End of script"

@@ -36,7 +36,7 @@ ansible-galaxy install xanmanning.k3s
 ````
 ### deploy k3s cluster
 ````
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.yml cluster.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory-private.yml cluster.yml
 ````
 
 ## remove infra
