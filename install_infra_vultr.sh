@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # default value
-DEFAULTNODELIST="CONSOLE01 MASTER01 NODE01 "
+DEFAULTNODELIST="MASTER01 NODE01 "
 
 # ubuntu 21.10
 UBUNTU="517"
@@ -14,12 +14,10 @@ plan_node="vc2-1c-2gb"
 osid=$UBUNTU
 region="cdg"
 number_node=0
-number_master=0
-number_console=0
 
 # temp file
-file_inventory_master="/tmp/kube_master.yml"
-file_inventory_node="/tmp/kube_node.yml"
+file_inventory_master="/tmp/kube_master"
+file_inventory_node="/tmp/kube_node"
 file_ITF="/tmp/ITF"
 file_MAC="/tmp/MAC"
 
@@ -89,15 +87,15 @@ for node in $nodelist
 do
   if [[ ${node} =~ "CONSOLE" ]]; then
     plan=$plan_console
-    number_console=$((number_console++))
+    ((number_node++))
   fi
   if [[ ${node} =~ "MASTER" ]]; then
     plan=$plan_master
-    number_master=$((number_master++))
+    ((number_node++))
   fi
   if [[ ${node} =~ "NODE" ]]; then 
     plan=$plan_node
-    number_node=$((number_node++))
+    ((number_node++))
   fi
 DATA='{"region":"'$region'",
 "plan":"'$plan'",
@@ -113,9 +111,10 @@ DATA='{"region":"'$region'",
   echo
 done
 
-echo "Wait provisionning finishes ..."
+nseconds=$((30+number_node*20))
+echo "Wait provisionning finishes ... $nseconds"
 echo " ----------------------------"
-sleep $((15+(number_master+number_node)*10))
+sleep $nseconds
 echo
 
 echo "Get Nodes and set internal interface "
@@ -209,6 +208,7 @@ function create_inventory()
       echo "Public ip:$ip"
       if valid_ip $ip; then
           if [[ $ip == "0.0.0.0" ]]; then
+              echo "Host bad IP: ${HOSTNAME[$i]}"
               stat='bad'
           else
               stat='good'
@@ -221,22 +221,22 @@ function create_inventory()
                 echo
               fi
               if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
-  echo 
-  '    #KUBE_MASTER_HOSTNAME:
+echo '
+      #KUBE_MASTER_HOSTNAME:
         ansible_host: #KUBE_MASTER_MAIN_IP
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
         ansible_become: true
-        ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> /tmp/kube_master
+        ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> "$file_inventory_master"
               fi
               if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
-  echo 
-  '    #KUBE_NODE_HOSTNAME:
+echo '
+      #KUBE_NODE_HOSTNAME:
         ansible_host: #KUBE_NODES_MAIN_IP
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
         ansible_become: true
-        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODES_MAIN_IP/'$ip'/g' >> /tmp/kube_node
+        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODES_MAIN_IP/'$ip'/g' >> "$file_inventory_node"
               fi
           fi
       else
@@ -249,16 +249,17 @@ function create_inventory()
 
   # substitute all
   if [[ -f "/tmp/kube_master" ]]; then
-    cp -f inventory-ansible.tmpl $inventory
-    cat -s /tmp/kube_master >> $inventory
-    cat -s /tmp/kube_node >> $inventory
-    #remove_file /tmp/kube_master /tmp/kube_node
+    cp -f inventory-ansible.tmpl "$inventory"
+    cat -s "$file_inventory_master" >> "$inventory"
+    cat -s "$file_inventory_node"   >> "$inventory"
   fi
 }
 
 # first inventory on pub ips
+remove_file "$file_inventory_master" "$file_inventory_node"
 create_inventory "inventory-public.yml" "$NODES_MAIN_IP"
 # second on private ips
+remove_file "$file_inventory_master" "$file_inventory_node"
 create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
 
 echo
