@@ -134,13 +134,14 @@ for t in ${NODES_COUNT[@]}; do
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
     ITF=`cat /tmp/ITF`
     rm /tmp/ITF
+    localfile="ifcfg-$ITF.yaml"
     netfile="ifcfg-$ITF"
-    echo "Capture itf name : $netfile"
-    cp -f net-centos8.tmpl $netfile
+    echo "Capture itf name : $localfile"
+    cp -f net-centos8.tmpl $localfile
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $netfile
-    sed -i 's/#ITF#/'$ITF'/g' $netfile
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$netfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $localfile
+    sed -i 's/#ITF#/'$ITF'/g' $localfile
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'"
     fi
@@ -154,14 +155,15 @@ for t in ${NODES_COUNT[@]}; do
     rm /tmp/MAC
     ITF=`cat /tmp/ITF`
     rm /tmp/ITF
+    localfile="10-$ITF.txt"
     netfile="10-$ITF"
     echo "Capture itf name :$netfile"
     cp -f net-ubuntu.tmpl $netfile
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $netfile
-    sed -i 's/#ITF#/'$ITF'/g' $netfile
-    sed -i 's/#MAC#/'$MAC'/g' $netfile
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$netfile" root@"$NODE_MAIN_IP:/etc/netplan/$netfile"
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $localfile
+    sed -i 's/#ITF#/'$ITF'/g' $localfile
+    sed -i 's/#MAC#/'$MAC'/g' $localfile
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODE_MAIN_IP:/etc/netplan/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "netplan apply" 
   fi
 done

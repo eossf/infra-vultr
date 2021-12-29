@@ -1,6 +1,6 @@
 .vscode
 kube_master.yml
 kube_node.yml
-ifcfg*.yaml
-10-*.yaml
+ifcfg-*.yaml
+10-.txt*
 inventory.yml
