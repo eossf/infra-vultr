@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # default value
-DEFAULTNODELIST="CONSOLE01 MASTER01 MASTER02 MASTER03 NODE01 NODE02 NODE03"
+DEFAULTNODELIST="CONSOLE01 MASTER01 NODE01 "
 
 # ubuntu 21.10
 UBUNTU="517"
@@ -20,7 +20,6 @@ number_console=0
 # --- params ---
 nodelist="$1"
 vultrapikey="$2"
-k3stoken="$3"
 if [[ $nodelist == "" ]] ; then
 	nodelist=$DEFAULTNODELIST
 fi
@@ -31,15 +30,8 @@ if [[ $vultrapikey == "" ]] ; then
     exit;
   fi
 fi
-if [[ $k3stoken == "" ]] ; then
-	k3stoken=`env | grep "K3S_TOKEN" | cut -d"=" -f2`
-  if [[ $k3stoken == "" ]] ; then
-    echo "Please enter the K3S_TOKEN parameter or exported env var"
-    exit;
-  fi
-fi
+
 VULTR_API_KEY=$vultrapikey
-K3S_TOKEN=$k3stoken
 
 function valid_ip()
 {
@@ -172,7 +164,7 @@ echo "Prepare files for Ansible ..."
 echo " ----------------------------"
 
 # get info back for ansible provisionning
-NODES=`curl "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
+NODES=`curl -s "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
 NODE_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
 NODE_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
 NODE_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
