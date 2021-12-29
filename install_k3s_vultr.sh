@@ -134,14 +134,15 @@ for t in ${NODES_COUNT[@]}; do
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":/tmp/ITF /tmp/ITF
     ITF=`cat /tmp/ITF`
     rm /tmp/ITF
-    echo "Capture itf name :"$ITF
-    cp -f ifcfg.tmpl ifcfg-$ITF
+    netfile="ifcfg-$ITF"
+    echo "Capture itf name : $netfile"
+    cp -f net-centos8.tmpl $netfile
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' ifcfg-$ITF
-    sed -i 's/#ITF#/'$ITF'/g' ifcfg-$ITF
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" ./ifcfg-$ITF root@"$NODE_MAIN_IP":/etc/sysconfig/network-scripts/ifcfg-$ITF
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/ifcfg-"$ITF
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'" 
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $netfile
+    sed -i 's/#ITF#/'$ITF'/g' $netfile
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$netfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/$netfile"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'"
     fi
   if [[ $osid == "$UBUNTU" ]]; then
     echo "Ubuntu Linux detected"
@@ -153,23 +154,20 @@ for t in ${NODES_COUNT[@]}; do
     rm /tmp/MAC
     ITF=`cat /tmp/ITF`
     rm /tmp/ITF
-    echo "Capture itf name :"$ITF
-    cp -f netplan.tmpl 10-$ITF.yaml
+    netfile="10-$ITF.yaml"
+    echo "Capture itf name :$netfile"
+    cp -f net-ubuntu.tmpl $netfile
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
-    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' 10-$ITF.yaml
-    sed -i 's/#ITF#/'$ITF'/g' 10-$ITF.yaml
-    sed -i 's/#MAC#/'$MAC'/g' 10-$ITF.yaml
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" ./10-$ITF.yaml root@"$NODE_MAIN_IP":/etc/netplan/10-$ITF.yaml
+    sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $netfile
+    sed -i 's/#ITF#/'$ITF'/g' $netfile
+    sed -i 's/#MAC#/'$MAC'/g' $netfile
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$netfile" root@"$NODE_MAIN_IP:/etc/netplan/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "netplan apply" 
   fi
 done
 
 echo "Prepare files for Ansible ..."
 echo " ----------------------------"
-
-cp -f inventory-ansible.tmpl inventory.yml
-echo "" > kube_master.yml
-echo "" > kube_node.yml
 
 # get info back for ansible provisionning
 NODES=`curl "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
@@ -191,6 +189,16 @@ for t in ${NODE_LABEL[@]}; do
   echo "Host : $t"
   ((i++))
 done
+
+function removefile()
+{
+  if [ -f "kube_master.yml" ]; then
+    rm kube_master.yml
+  fi
+  if [ -f "kube_node.yml" ];
+    rm kube_node.yml
+  fi
+}
 
 echo "Print inventory.yml"
 echo " ----------------------------"
@@ -233,8 +241,12 @@ echo '    #KUBE_NODE_HOSTNAME:
 done
 
 # subsitute all
-cat -s kube_master.yml >> inventory.yml
-cat -s kube_node.yml >> inventory.yml
+if [[ -f "kube_master" ]]; then
+  cp -f inventory-ansible.tmpl inventory.yml
+  cat -s kube_master.yml >> inventory.yml
+  cat -s kube_node.yml >> inventory.yml
+  removefile
+fi
 
 echo
 echo "End of script"
