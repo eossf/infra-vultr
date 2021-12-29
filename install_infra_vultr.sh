@@ -135,7 +135,7 @@ for t in ${NODES_COUNT[@]}; do
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' $localfile
     sed -i 's/#ITF#/'$ITF'/g' $localfile
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "./$localfile" root@"$NODES_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'"
     fi
@@ -167,20 +167,20 @@ echo " ----------------------------"
 
 # get info back for ansible provisionning
 NODES=`curl -s "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
-NODE_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
-NODE_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
-NODE_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
+NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
+NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
+NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
 
-echo "NODE             = $NODE"
-echo "NODE_LABEL       = $NODE_LABEL"
-echo "NODE_MAIN_IP     = $NODE_MAIN_IP"
-echo "NODE_INTERNAL_IP = $NODE_INTERNAL_IP"
+echo "NODE              = $NODE"
+echo "NODES_LABEL       = $NODES_LABEL"
+echo "NODES_MAIN_IP     = $NODES_MAIN_IP"
+echo "NODES_INTERNAL_IP = $NODES_INTERNAL_IP"
 
 echo "Display hosts"
 echo " ----------------------------"
 HOSTNAME=()
 i=0
-for t in ${NODE_LABEL[@]}; do
+for t in ${NODES_LABEL[@]}; do
   HOSTNAME[$i]=$t
   echo "Host : $t"
   ((i++))
@@ -231,11 +231,11 @@ function create_inventory()
               fi
               if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
   echo '    #KUBE_NODE_HOSTNAME:
-        ansible_host: #KUBE_NODE_MAIN_IP
+        ansible_host: #KUBE_NODES_MAIN_IP
         ansible_ssh_user: "root"
         ansible_ssh_private_key_file: "~/.ssh/id_rsa"
         ansible_become: true
-        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODE_MAIN_IP/'$ip'/g' >> /tmp/kube_node.yml
+        ansible_become_user: "root"' | sed 's/#KUBE_NODE_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_NODES_MAIN_IP/'$ip'/g' >> /tmp/kube_node.yml
               fi
           fi
       else
@@ -256,9 +256,9 @@ function create_inventory()
 }
 
 # first inventory on pub ips
-create_inventory $NODE_MAIN_IP "inventory-public.yml"
+create_inventory $NODES_MAIN_IP "inventory-public.yml"
 # second on private ips
-create_inventory $NODE_INTERNAL_IP "inventory-private.yml"
+create_inventory $NODES_INTERNAL_IP "inventory-private.yml"
 
 echo
 echo "End of script"
