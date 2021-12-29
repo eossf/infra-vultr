@@ -1,10 +1,10 @@
 # K3s ansible on Vultr
 
-## Create console VULTR on your Desktop PC
+## Create machine "console01" in VULTR infra
 ### script creating the console
 ````
-# need jq (apt install jq)
-./install_k3s_vultr.sh "CONSOLE01"
+# WARNING you need jq (apt install jq)
+./install_infra_vultr.sh "CONSOLE01"
 ````
 ### copy id_rsa in the console01
 ````
@@ -20,7 +20,7 @@ cd infra-vultr
 apt install jq
 export  VULTR_API_KEY="YYYY"
 export  K3S_TOKEN="ZZZZ"
-./install_k3s_vultr.sh "MASTER01 NODE01"
+./install_infra_vultr.sh "MASTER01 NODE01"
 ````
 ### ansible 
 Still on the console01
@@ -38,4 +38,9 @@ ansible-galaxy install xanmanning.k3s
 ### deploy k3s cluster
 ````
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.yml cluster.yml
+````
+
+## remove infra
+````
+./remove_infra_vultr.sh "MASTER01 NODE01"
 ````
