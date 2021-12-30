@@ -1,3 +1,0 @@
-ENV 
- release name: {{ .Release.Name }}
- environmentType: {{ .Values.environmentType }}
