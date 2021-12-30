@@ -1,0 +1,4 @@
+- pipeline.id: vyvx
+  path.config: "/usr/share/logstash/pipeline/vyvx.conf"
+- pipeline.id: statushub
+  path.config: "/usr/share/logstash/pipeline/statushub.conf"

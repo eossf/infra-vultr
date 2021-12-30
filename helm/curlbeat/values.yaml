@@ -1,0 +1,75 @@
+# Default values for logstash.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# k8s k3s eks ok39
+environmentType: k3s
+
+# container wait before/after launching scheduled command in seconds
+waitbefore: 0
+waitafter: 0
+# cronjob schedule
+schedule: "* * * * *"
+
+# logrotate 1d
+logrotate: 86400
+
+# hosts
+hosts:
+  MAIN_HOST: "https://localhost:1090"
+
+curlbeatlog: "/pvclog/curlbeat/curlbeat.log"
+curlbeattmp: "/tmp/curlbeat.tmp"
+script: 'echo "hello world" > /tmp/curlbeat.tmp'
+
+replicaCount: 1
+
+image:
+  curlbeat: k3d-local-registry:5000/curlbeat:0.3.0
+  logrotate: k3d-local-registry:5000/logrotate:0.3.0
+  filebeat: docker.elastic.co/beats/filebeat:7.12.0
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+
+LS_JAVA_OPTS: "-Xmx1024m -Xms1024m"
+resources:
+  limits:
+    cpu: 300m
+    memory: 1024Mi
+  requests:
+    cpu: 300m
+    memory: 1024Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

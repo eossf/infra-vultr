@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mockserver.fullname" . }}
+  labels:
+    {{- include "mockserver.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "mockserver.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "mockserver.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "mockserver.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      {{- $releaseName := .Release.Name -}}
+     {{- range $path, $bytes := .Files.Glob (printf "config/**.properties") }}
+      - name: {{ base $path | trimSuffix ".properties" }}
+        configMap:
+          defaultMode: 0755
+          name: {{ $releaseName }}-configmap
+          items:
+          - key: {{ base $path }}
+            path: {{ base $path }}
+      {{- end }}
+     {{- range $path, $bytes := .Files.Glob (printf "config/**.json") }}
+      - name: {{ base $path | lower | trimSuffix ".json" }}
+        configMap:
+          defaultMode: 0755
+          name: {{ $releaseName }}-configmap
+          items:
+          - key: {{ base $path }}
+            path: {{ base $path }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: MOCKSERVER_PROPERTY_FILE
+              value: "/config/mockserver.properties"
+            - name: MOCKSERVER_INITIALIZATION_JSON_PATH
+              value: "/config/initializerJson.json"
+          args: ["-logLevel", "INFO", "-serverPort", "1090", "-proxyRemotePort", "80", "-proxyRemoteHost", "www.mock-server.com"]
+          volumeMounts:
+          {{- range $path, $bytes := .Files.Glob (printf "config/**.properties") }}
+          - name: {{ base $path | trimSuffix ".properties" }}
+            mountPath: {{ $path | trimPrefix "config" }}
+            readOnly: false
+            subPath: {{ base $path }}
+          {{- end }}
+          {{- range $path, $bytes := .Files.Glob (printf "config/**.json") }}
+          - name: {{ base $path | lower | trimSuffix ".json" }}
+            mountPath: {{ $path | trimPrefix "config" }}
+            readOnly: false
+            subPath: {{ base $path }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 1090
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

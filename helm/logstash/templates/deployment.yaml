@@ -1,0 +1,120 @@
+#  switch ns :  kubectl config set-context $(kubectl config current-context) --namespace=monitoring-afp
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "logstash.fullname" . }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "logstash.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "logstash.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "logstash.serviceAccountName" . }}
+      volumes:
+      - name: vollog
+        persistentVolumeClaim:
+          claimName: pvclog
+      {{- $releaseName := .Release.Name -}}
+      {{- range $path, $bytes := .Files.Glob (printf "config/**.yml") }}
+      - name: {{ base $path | trimSuffix ".yml" }}
+        configMap:
+          defaultMode: 0755
+          name: {{ $releaseName }}-configmap
+          items:
+          - key: {{ base $path }}
+            path: {{ base $path }}
+      {{- end }}
+     {{- range $path, $bytes := .Files.Glob (printf "config/**.properties") }}
+      - name: {{ base $path | trimSuffix ".properties" }}
+        configMap:
+          defaultMode: 0755
+          name: {{ $releaseName }}-configmap
+          items:
+          - key: {{ base $path }}
+            path: {{ base $path }}
+      {{- end }}
+     {{- range $path, $bytes := .Files.Glob (printf "config/**.conf") }}
+      - name: {{ base $path | trimSuffix ".conf" }}
+        configMap:
+          defaultMode: 0755
+          name: {{ $releaseName }}-configmap
+          items:
+          - key: {{ base $path }}
+            path: {{ base $path }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: LS_JAVA_OPTS
+              value: {{ .Values.LS_JAVA_OPTS }}
+            {{- range $k, $v := .Values.hosts }}
+            - name: {{ $k }}
+              value: "{{ $v }}"
+            {{- end }}
+            {{- range $path, $bytes := .Files.Glob "config/*.secret" }}
+            {{- range $k := $.Files.Lines $path }}
+            {{ $a := split ": " $k }}
+            - name: {{ $a._0 }}
+              valueFrom:
+                secretKeyRef:
+                  key: {{ $a._0 }}
+                  name: {{ $releaseName }}-secret
+              {{- end }}
+            {{- end }}
+          volumeMounts:
+          - name: vollog
+            mountPath: /pvclog
+          {{- range $path, $bytes := .Files.Glob (printf "config/**.yml") }}
+          - name: {{ base $path | trimSuffix ".yml" }}
+            mountPath: {{ $path | trimPrefix "config" }}
+            readOnly: false
+            subPath: {{ base $path }}
+          {{- end }}
+          {{- range $path, $bytes := .Files.Glob (printf "config/**.properties") }}
+          - name: {{ base $path | trimSuffix ".properties" }}
+            mountPath: {{ $path | trimPrefix "config" }}
+            readOnly: false
+            subPath: {{ base $path }}
+          {{- end }}
+          {{- range $path, $bytes := .Files.Glob (printf "config/**.conf") }}
+          - name: {{ base $path | trimSuffix ".conf" }}
+            mountPath: {{ $path | trimPrefix "config" }}
+            readOnly: false
+            subPath: {{ base $path }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

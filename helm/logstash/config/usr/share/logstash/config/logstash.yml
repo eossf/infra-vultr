@@ -1,0 +1,10 @@
+---
+http.host: "0.0.0.0"
+xpack.monitoring.elasticsearch.hosts: [ "${ES_HOST}" ]
+## X-Pack security credentials
+xpack.monitoring.enabled: true
+xpack.monitoring.elasticsearch.username: ${ES_LOGSTASH_INTERNAL_USER}
+xpack.monitoring.elasticsearch.password: ${ES_LOGSTASH_INTERNAL_PASSWORD}
+xpack.management.pipeline.id: ["globosat-vyvx"]
+
+log.level: info

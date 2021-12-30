@@ -15,7 +15,7 @@ scp -i ~/.ssh/id_rsa ~/.ssh/id_rsa root@PUB_IP_CONSOLE01:~/.ssh/id_rsa
 ### script creating the masters and nodes
 ````
 ssh -i ~/.ssh/id_rsa root@PUB_IP_CONSOLE01
-git clone git@github.com:eossf/infra-vultr.git
+    git clone git@github.com:eossf/infra-vultr.git
 cd infra-vultr
 apt install jq
 export  VULTR_API_KEY="YYYY"
@@ -24,7 +24,7 @@ export  VULTR_API_KEY="YYYY"
 ### ansible 
 Still on the console01
 ````
-apt remove ansible 
+apt remove ansible
 apt install software-properties-common
 add-apt-repository --yes --update ppa:ansible/ansible
 apt update

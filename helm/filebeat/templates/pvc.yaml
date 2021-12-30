@@ -1,0 +1,14 @@
+{{ if (eq .Values.createpvc "yes") }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+    "helm.sh/resource-policy": keep
+  name: pvclog
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.pvcsize }}
+{{ end }}
