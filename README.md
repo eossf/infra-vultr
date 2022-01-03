@@ -26,26 +26,23 @@ apt -y install jq
 export  VULTR_API_KEY="YYYY"
 ./install_infra_vultr.sh "MASTER01 NODE01"
 ````
-### ansible 
+## Install ansible 
 Still on the console01
 ````
-apt -y remove ansible
-apt -y install software-properties-common
-add-apt-repository --yes --update ppa:ansible/ansible
-apt -y update
-apt -y install ansible
+cd ~/infra-vultr/ansible
+./install_ansible.sh
 ````
-### install role 
+### install role k3s
 ````
 ansible-galaxy install xanmanning.k3s
 ````
-### deploy k3s cluster
+## deploy k3s cluster
 ````
 cd ~/infra-vultr
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory-private.yml cluster.yml
 ````
 
-## Kubeconfig
+### Kubeconfig
 Still connected to the CONSOLE01 , copy the file create-kubeconfig.sh to the MASTER01
 ````
 cd ~/infra-vultr
@@ -60,7 +57,7 @@ chmod 775 ./create-kubeconfig.sh
 ````
 
 Exit and retrieve the file from CONSOLE01
-### Install kubectl 
+## Install kubectl 
 return to the CONSOLE01:
 ````
 cd ~/infra-vultr/kub
@@ -111,20 +108,25 @@ kube-system   job.batch/helm-install-traefik-crd   1/1           20s        21m
 kube-system   job.batch/helm-install-traefik       1/1           39s        21m
 ````
 
-## remove infra
-Keep Console01
-````
-./remove_infra_vultr.sh "MASTER01 NODE01"
-````
-
-or remove all 
-````
-./remove_infra_vultr.sh
-````
-
 ## Install Helm
 Still on the CONSOLE01:
 ````
 cd ~/infra-vultr/helm
 ./install_helm.sh
+````
+
+## Install Docker
+Still on the CONSOLE01:
+````
+cd ~/infra-vultr/container
+./install_docker.sh
+````
+
+## remove infra (destroy machines)
+Keep Console01
+````
+./remove_infra_vultr.sh "MASTER01 NODE01"
+
+# or remove all 
+./remove_infra_vultr.sh
 ````
