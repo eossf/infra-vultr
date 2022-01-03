@@ -1,5 +1,11 @@
 # K3s ansible on Vultr
 
+## Get repository for rw
+````
+ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa; git clone git@github.com:eossf/infra-vultr.git'
+git config --global user.email "my@email.com"
+````
+
 ## Create machine "console01" in VULTR infra
 ### script creating the console
 ````
