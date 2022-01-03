@@ -66,3 +66,4 @@ sed -i 's/127.0.0.1/'${MASTER_IP}'/g' "$CONSOLE-cluster-admin-config"
 
 cat $CONSOLE-cluster-admin-config 
 echo "Access the cluster : kubectl --kubeconfig $CONSOLE-cluster-admin-config get all --all-namespaces"
+echo "copy this '$CONSOLE-cluster-admin-config' to ==> .kube/config

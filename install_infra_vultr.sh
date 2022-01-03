@@ -112,7 +112,7 @@ DATA='{"region":"'$region'",
 done
 
 nseconds=$((30+number_node*20))
-echo "Wait provisionning finishes ... $nseconds"
+echo "Wait provisionning finishes ... $nseconds seconds"
 echo " ----------------------------"
 sleep $nseconds
 echo
