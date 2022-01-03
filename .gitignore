@@ -5,3 +5,5 @@ ifcfg-*.yaml
 10-.txt*
 inventory-*.yml
 inventory.yml
+docker
+kubectl

@@ -71,6 +71,8 @@ scp root@MASTER01:~/console01-cluster-admin-config ~/.kube/config
 ````
 
 ### Test kubectl
+see script helper.sh for having completion and aliases to kubectl
+
 ````
 kubectl get all --all-namespaces
 NAMESPACE     NAME                                         READY   STATUS      RESTARTS   AGE
