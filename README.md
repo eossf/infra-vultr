@@ -57,11 +57,14 @@ Still connected to the CONSOLE01 , copy the file create-kubeconfig.sh to the MAS
 ````
 cd ~/infra-vultr
 scp kub/create-kubeconfig.sh MASTER01:~/create-kubeconfig.sh
+# by default : scp kub/create-kubeconfig.sh 192.168.0.4:~/create-kubeconfig.sh
 ````
 
 Then, switch to the MASTER01, launch:
 ````
-chmod 775 ./create-kubeconfig.sh
+ssh MASTER01
+# by default : ssh 192.168.0.4
+
 ./create-kubeconfig.sh LOCAL_IP_MASTER01 "CONSOLE01"
 # by default : ./create-kubeconfig.sh 192.168.0.4 "CONSOLE01"
 ````
@@ -75,6 +78,8 @@ cd ~/infra-vultr/kub
 cd ~
 mkdir .kube
 scp root@MASTER01:~/console01-cluster-admin-config ~/.kube/config 
+# by default : scp root@192.168.0.4:~/console01-cluster-admin-config ~/.kube/config 
+chmod 600 ~/.kube/config 
 ````
 
 ### Test kubectl
