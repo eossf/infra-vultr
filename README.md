@@ -132,7 +132,8 @@ cd ~/infra-vultr/container
 ./install_docker.sh
 ````
 
-## -- Remove infra (destroy machines)
+## -- Remove 
+### remove infra (destroy machines)
 Keep Console01
 ````
 ./remove_infra_vultr.sh "MASTER01 NODE01"
