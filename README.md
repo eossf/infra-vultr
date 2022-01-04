@@ -1,15 +1,18 @@
 # K3s ansible on Vultr
 
-## Get repository for rw
+## -- Get repository with  read-write access
 ````
 ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa; git clone git@github.com:eossf/infra-vultr.git'
-git config --global user.email "my@email.com"
+git config --global user.email "stephane.metairie@gmail.com"
 ````
 
-## Create machine "console01" in VULTR infra
+## -- Create machine "console01" in VULTR infra
 ### script creating the console
 ````
-# WARNING you need jq (apt install jq)
+# you need jq 
+apt -y install jq
+
+export  VULTR_API_KEY="YYYY"
 ./install_infra_vultr.sh "CONSOLE01"
 ````
 ### copy id_rsa in the console01
@@ -17,14 +20,14 @@ git config --global user.email "my@email.com"
 scp -i ~/.ssh/id_rsa ~/.ssh/id_rsa root@PUB_IP_CONSOLE01:~/.ssh/id_rsa
 ````
 
-## Create infrastructure VULTR
+## -- Create infrastructure K3s for VULTR
 ### script creating the masters and nodes
 Connect to the CONSOLE01
 ````
 ssh -i ~/.ssh/id_rsa root@PUB_IP_CONSOLE01
 ````
 
-Then clone and install the infra:
+Then clone the repo infra-vultr and install:
 ````
 git clone git@github.com:eossf/infra-vultr.git
 cd infra-vultr
@@ -32,7 +35,8 @@ apt -y install jq
 export  VULTR_API_KEY="YYYY"
 ./install_infra_vultr.sh "MASTER01 NODE01"
 ````
-## Install ansible 
+
+## -- Install ansible 
 Still on the console01
 ````
 cd ~/infra-vultr/ansible
@@ -42,7 +46,7 @@ cd ~/infra-vultr/ansible
 ````
 ansible-galaxy install xanmanning.k3s
 ````
-## deploy k3s cluster
+## -- Deploy k3s cluster
 ````
 cd ~/infra-vultr
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory-private.yml cluster.yml
@@ -63,7 +67,7 @@ chmod 775 ./create-kubeconfig.sh
 ````
 
 Exit and retrieve the file from CONSOLE01
-## Install kubectl 
+## -- Install kubectl 
 return to the CONSOLE01:
 ````
 cd ~/infra-vultr/kub
@@ -114,21 +118,21 @@ kube-system   job.batch/helm-install-traefik-crd   1/1           20s        21m
 kube-system   job.batch/helm-install-traefik       1/1           39s        21m
 ````
 
-## Install Helm
+## -- Install Helm
 Still on the CONSOLE01:
 ````
 cd ~/infra-vultr/helm
 ./install_helm.sh
 ````
 
-## Install Docker
+## -- Install Docker
 Still on the CONSOLE01:
 ````
 cd ~/infra-vultr/container
 ./install_docker.sh
 ````
 
-## remove infra (destroy machines)
+## -- Remove infra (destroy machines)
 Keep Console01
 ````
 ./remove_infra_vultr.sh "MASTER01 NODE01"
