@@ -18,6 +18,7 @@ export  VULTR_API_KEY="YYYY"
 ### copy id_rsa in the console01
 ````
 scp -i ~/.ssh/id_rsa ~/.ssh/id_rsa root@PUB_IP_CONSOLE01:~/.ssh/id_rsa
+# example: scp -i ~/.ssh/id_rsa ~/.ssh/id_rsa root@95.179.215.203:~/.ssh/id_rsa
 ````
 
 ## -- Create infrastructure K3s for VULTR
@@ -25,14 +26,16 @@ scp -i ~/.ssh/id_rsa ~/.ssh/id_rsa root@PUB_IP_CONSOLE01:~/.ssh/id_rsa
 Connect to the CONSOLE01
 ````
 ssh -i ~/.ssh/id_rsa root@PUB_IP_CONSOLE01
+# example: ssh -i ~/.ssh/id_rsa root@95.179.215.203
 ````
 
 Then clone the repo infra-vultr and install:
 ````
+export  VULTR_API_KEY="YYYY"
+apt -y install jq
+# accept the key
 git clone git@github.com:eossf/infra-vultr.git
 cd infra-vultr
-apt -y install jq
-export  VULTR_API_KEY="YYYY"
 ./install_infra_vultr.sh "MASTER01 NODE01"
 ````
 
