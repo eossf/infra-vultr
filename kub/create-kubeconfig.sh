@@ -58,8 +58,10 @@ users:
     token: ${USER_TOKEN_VALUE}
 " > $CONSOLE-cluster-admin-config
 
-# open port 6443 
-ufw allow 6443
+# open port 6443 kube API
+ufw allow 6443 
+# open port for registry
+ufw allow 5000
 
 # 127.0.0.1 by MASTER01 ip
 sed -i 's/127.0.0.1/'${MASTER_IP}'/g' "$CONSOLE-cluster-admin-config"

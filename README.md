@@ -67,8 +67,7 @@ Then, switch to the MASTER01, launch:
 ````
 ssh MASTER01
 # by default : ssh 192.168.0.4
-
-./create-kubeconfig.sh LOCAL_IP_MASTER01 "CONSOLE01"
+./create-kubeconfig.sh MASTER01 "CONSOLE01"
 # by default : ./create-kubeconfig.sh 192.168.0.4 "CONSOLE01"
 ````
 
@@ -126,6 +125,16 @@ kube-system   job.batch/helm-install-traefik-crd   1/1           20s        21m
 kube-system   job.batch/helm-install-traefik       1/1           39s        21m
 ````
 
+### add allow nodeport 32000, port 8000
+Still on the CONSOLE01:
+````
+ssh root@NODE01
+# by default: ssh 192.168.0.5
+
+ufw allow 32000
+ufw allow 8000
+````
+
 ## -- Install Helm
 Still on the CONSOLE01:
 ````
@@ -133,11 +142,12 @@ cd ~/infra-vultr/helm
 ./install_helm.sh
 ````
 
-## -- Install Docker
+## -- Install Docker and Docker-compose
 Still on the CONSOLE01:
 ````
 cd ~/infra-vultr/container
 ./install_docker.sh
+./install_compose.sh
 ````
 
 ## -- Remove 
