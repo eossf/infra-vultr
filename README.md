@@ -131,7 +131,12 @@ Still on the CONSOLE01:
 ssh root@NODE01
 # by default: ssh 192.168.0.5
 
+# int, qual, preprod, prod
 ufw allow 32000
+ufw allow 32001
+ufw allow 32002
+ufw allow 32003
+
 ufw allow 8000
 ````
 
