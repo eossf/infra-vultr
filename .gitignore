@@ -8,3 +8,8 @@ inventory.yml
 docker
 kubectl
 docker-compose
+.env
+.cache
+.bak
+.tmp
+config
