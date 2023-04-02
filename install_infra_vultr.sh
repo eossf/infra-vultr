@@ -134,7 +134,7 @@ for t in ${NODES_COUNT[@]}; do
   NODE_INTERNAL_IP=`echo $NODE | jq '.instance.internal_ip' | tr -d '"'`
   NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
   if [[ $osid == "$CENTOS" ]]; then
-    echo "CentOS Linux detected"
+    echo "    CentOS Linux detected"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > $file_NETINTERFACE"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_NETINTERFACE $file_NETINTERFACE
     NETINTERFACE=`cat $file_NETINTERFACE`
@@ -142,7 +142,7 @@ for t in ${NODES_COUNT[@]}; do
     netfile="ifcfg-$NETINTERFACE"
     echo "Capture itf name : $localfile"
     cp -f net-centos8.tmpl "$localfile"
-    echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
+    echo "  🖧 - NODE ${NODE_LABEL} ip=${NODE_MAIN_IP} setup private interface ${NODE_INTERNAL_IP}"
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
     sed -i 's/#NETINTERFACE#/'$NETINTERFACE'/g' "$localfile"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "$localfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
@@ -150,7 +150,7 @@ for t in ${NODES_COUNT[@]}; do
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$NETINTERFACE"'"
     fi
   if [[ $osid == "$UBUNTU" ]]; then
-    echo "Ubuntu Linux detected"
+    echo "    ❤️ Ubuntu Linux detected"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > $file_MACADDRESS"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > $file_NETINTERFACE"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP:$file_MACADDRESS $file_MACADDRESS"
@@ -166,7 +166,7 @@ for t in ${NODES_COUNT[@]}; do
     echo $localfile
     echo $netfile
     cp -f net-ubuntu.tmpl "$localfile"
-    echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
+    echo "  🖧 - NODE ${NODE_LABEL} ip=${NODE_MAIN_IP} setup private interface ${NODE_INTERNAL_IP}"
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
     sed -i 's/#NETINTERFACE#/'$NETINTERFACE'/g' "$localfile"
     sed -i 's/#MACADDRESS#/'$MACADDRESS'/g' "$localfile"
