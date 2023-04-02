@@ -190,14 +190,7 @@ function create_inventory()
               stat='bad'
           else
               stat='good'
-              echo "Host: ${HOSTNAME[$i]}"
-              if [[ ${HOSTNAME[$i]}  =~ "CONSOLE" ]]; then
-                echo "Host: ${HOSTNAME[$i]} is not managed by ansible"
-                echo "Connection information"
-                echo "scp -i ~/.ssh/id_rsa ~/.ssh/id_rsa root@$ip:~/.ssh/id_rsa"
-                echo "ssh -i ~/.ssh/id_rsa root@$ip"
-                echo
-              fi
+              echo "Insertion into $inventory of ${HOSTNAME[$i]}"
               if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
 echo '
       #KUBE_MASTER_HOSTNAME:
@@ -220,8 +213,6 @@ echo '
       else
           stat='bad';
       fi
-
-      echo "Insertion into $inventory result ${HOSTNAME[$i]} = $stat"
       ((i++))
   done
 
