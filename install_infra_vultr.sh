@@ -188,8 +188,8 @@ local inventory=$1
               stat='bad'
           else
               stat='good'
-              echo "Insertion into $inventory of ${HOSTNAME[$i]}"
               if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
+                echo "Insertion into $inventory of MASTER ${HOSTNAME[$i]}"
 echo '
       #KUBE_MASTER_HOSTNAME:
         ansible_host: #KUBE_MASTER_MAIN_IP
@@ -199,6 +199,7 @@ echo '
         ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> "$file_inventory_master"
               fi
               if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
+                echo "Insertion into $inventory of MASTER ${HOSTNAME[$i]}"
 echo '
       #KUBE_NODE_HOSTNAME:
         ansible_host: #KUBE_NODES_MAIN_IP
