@@ -59,13 +59,7 @@ function valid_ip()
     return $stat
 }
 
-echo " ----------------------------"
-echo "OSID             = $osid"
-echo "NODELIST         = $nodelist"
-echo "VM master        = $plan_master"
-echo "VM node          = $plan_node"
-
-echo " ----------------------------"
+echo " ---------------------------------"
 echo "Get private network list"
 APN=`curl -s "https://api.vultr.com/v2/private-networks" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.networks[].id' | tr -d '"'`
 if [[ $APN == "" ]]; then 
@@ -86,8 +80,9 @@ echo " ----------------------------"
 echo "Get SSH key for accessing servers"
 SSHKEY_ID=`curl -s "https://api.vultr.com/v2/ssh-keys"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.ssh_keys[].id' | tr -d '"'`
 
+# echo " ---------------------------------"
 # echo "🐇 Fast creation of masters and nodes 🐇"
-# echo " ----------------------------"
+# echo " ---------------------------------"
 # for node in $nodelist
 # do
 #   if [[ ${node} =~ "CONSOLE" ]]; then
@@ -110,21 +105,22 @@ SSHKEY_ID=`curl -s "https://api.vultr.com/v2/ssh-keys"   -X GET   -H "Authorizat
 # "attach_private_network":["'$APN'"],
 # "sshkey_id":["'$SSHKEY_ID'"]
 # }'
-
-#   #echo $DATA
 #   echo "Create node: $node"
 #   curl -s "https://api.vultr.com/v2/instances" -X POST -H "Authorization: Bearer ${VULTR_API_KEY}" -H "Content-Type: application/json" --data "${DATA}"
 #   echo
 # done
 
 # nseconds=$((30+number_node*20))
-# echo
+# echo " ---------------------------------"
 # echo " ⌛⌛⌛ Wait provisionning finishes ... $nseconds seconds ⌛⌛⌛"
-# echo " ----------------------------"
+# echo " ---------------------------------"
 # sleep $nseconds
 # echo
 
+echo " ---------------------------------"
 echo "👺 Get Nodes and 🤖 set internal interface "
+echo " ---------------------------------"
+
 NODES=`curl -s "https://api.vultr.com/v2/instances" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
 NODES_COUNT=`echo $NODES | jq '.instances' | grep -i '"id"' | tr -d "," | cut -d ":" -f2 | tr -d " " | tr -d '"'`
 for t in ${NODES_COUNT[@]}; do
@@ -156,8 +152,9 @@ for t in ${NODES_COUNT[@]}; do
   fi
 done
 
-echo "Prepare files for Ansible ..."
-echo " ----------------------------"
+echo " ---------------------------------"
+echo " 🗻 Prepare files for Ansible ..."
+echo " ---------------------------------"
 
 # get info back for ansible provisionning
 NODES=`curl -s "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
@@ -189,7 +186,8 @@ function create_inventory()
     ((j++))
   done
 
-  echo "Print out inventory file: $inventory for public ip list: $ips"
+  echo " ---------------------------------"
+  echo " Print out inventory file: $inventory for public ip list: $ips"
   echo " ----------------------------"
   i=0
   for ip in $ips
