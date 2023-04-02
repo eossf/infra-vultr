@@ -132,6 +132,14 @@ for t in ${NODES_COUNT[@]}; do
   NODE_LABEL=`echo $NODE | jq '.instance.label' | tr -d '"'`
   NODE_INTERNAL_IP=`echo $NODE | jq '.instance.internal_ip' | tr -d '"'`
   NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
+
+  echo "----------------------------"
+  echo $NODE
+  echo $NODE_LABEL
+  echo $NODE_INTERNAL_IP
+  echo $NODE_MAIN_IP
+  echo "-----------------------------"
+
   if [[ $osid == "$CENTOS" ]]; then
     echo "    CentOS Linux detected"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > $file_NETINTERFACE"
