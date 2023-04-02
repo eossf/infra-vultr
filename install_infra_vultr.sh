@@ -128,6 +128,7 @@ echo "👺 Get Nodes and 🤖 set internal interface "
 NODES=`curl -s "https://api.vultr.com/v2/instances" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
 NODES_COUNT=`echo $NODES | jq '.instances' | grep -i '"id"' | tr -d "," | cut -d ":" -f2 | tr -d " " | tr -d '"'`
 for t in ${NODES_COUNT[@]}; do
+  echo $t | jq '.hostname'
   NODE=`curl -s "https://api.vultr.com/v2/instances/${t}" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
   NODE_LABEL=`echo $NODE | jq '.instance.label' | tr -d '"'`
   NODE_INTERNAL_IP=`echo $NODE | jq '.instance.internal_ip' | tr -d '"'`
