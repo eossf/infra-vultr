@@ -23,8 +23,8 @@ number_node=0
 # temp file
 file_inventory_master="/tmp/kube_master"
 file_inventory_node="/tmp/kube_node"
-file_ITF="/tmp/ITF"
-file_MAC="/tmp/MAC"
+file_NETINTERFACE="/tmp/NETINTERFACE"
+file_MACADDRESS="/tmp/MACADDRESS"
 
 # --- params ---
 nodelist="$1"
@@ -134,39 +134,41 @@ for t in ${NODES_COUNT[@]}; do
   NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
   if [[ $osid == "$CENTOS" ]]; then
     echo "CentOS Linux detected"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > $file_ITF"
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_ITF $file_ITF
-    ITF=`cat $file_ITF`
-    localfile="/tmp/ifcfg-$ITF.yaml"
-    netfile="ifcfg-$ITF"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli | grep 'disconnected' | cut -d':' -f1 > $file_NETINTERFACE"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_NETINTERFACE $file_NETINTERFACE
+    NETINTERFACE=`cat $file_NETINTERFACE`
+    localfile="/tmp/ifcfg-$NETINTERFACE.yaml"
+    netfile="ifcfg-$NETINTERFACE"
     echo "Capture itf name : $localfile"
     cp -f net-centos8.tmpl "$localfile"
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
-    sed -i 's/#ITF#/'$ITF'/g' "$localfile"
+    sed -i 's/#NETINTERFACE#/'$NETINTERFACE'/g' "$localfile"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "$localfile" root@"$NODE_MAIN_IP:/etc/sysconfig/network-scripts/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con load /etc/sysconfig/network-scripts/$netfile"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$ITF"'"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "nmcli con up 'System "$NETINTERFACE"'"
     fi
   if [[ $osid == "$UBUNTU" ]]; then
     echo "Ubuntu Linux detected"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > $file_MAC"
-    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > $file_ITF"
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_MAC $file_MAC
-    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_ITF $file_ITF
-    MAC=`cat $file_MAC`
-    ITF=`cat $file_ITF`
-    cat /tmp/MAC
-    cat /tmp/ITF
-    localfile="/tmp/10-$ITF.txt"
-    netfile="10-$ITF"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > $file_MACADDRESS"
+    ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > $file_NETINTERFACE"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP:$file_MACADDRESS $file_MACADDRESS"
+    scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP:$file_NETINTERFACE $file_NETINTERFACE"
+    MACADDRESS=`cat $file_MACADDRESS`
+    NETINTERFACE=`cat $file_NETINTERFACE`
+    echo $MACADDRESS
+    echo $NETINTERFACE
+    cat $file_MACADDRESS
+    cat $file_NETINTERFACE
+    localfile="/tmp/10-$NETINTERFACE.txt"
+    netfile="10-$NETINTERFACE"
     echo $localfile
     echo $netfile
     cp -f net-ubuntu.tmpl "$localfile"
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
-    sed -i 's/#ITF#/'$ITF'/g' "$localfile"
-    sed -i 's/#MAC#/'$MAC'/g' "$localfile"
+    sed -i 's/#NETINTERFACE#/'$NETINTERFACE'/g' "$localfile"
+    sed -i 's/#MACADDRESS#/'$MACADDRESS'/g' "$localfile"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" "$localfile" root@"$NODE_MAIN_IP:/etc/netplan/$netfile"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "netplan apply"
   fi
