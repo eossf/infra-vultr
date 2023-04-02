@@ -181,7 +181,7 @@ local inventory=$1
   i=0
   for ip in $ips
   do
-      echo "Public ip:$ip"
+      echo "Public current ip is: $ip"
       if valid_ip $ip; then
           if [[ $ip == "0.0.0.0" ]]; then
               echo "Host bad IP: ${HOSTNAME[$i]}"
@@ -199,7 +199,7 @@ echo '
         ansible_become_user: "root"' | sed 's/#KUBE_MASTER_HOSTNAME/'${HOSTNAME[$i]}'/g' | sed 's/#KUBE_MASTER_MAIN_IP/'$ip'/g' >> "$file_inventory_master"
               fi
               if [[ ${HOSTNAME[$i]}  =~ "NODE" ]]; then
-                echo "Insertion into $inventory of MASTER ${HOSTNAME[$i]}"
+                echo "Insertion into $inventory of NODE ${HOSTNAME[$i]}"
 echo '
       #KUBE_NODE_HOSTNAME:
         ansible_host: #KUBE_NODES_MAIN_IP
