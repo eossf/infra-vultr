@@ -156,8 +156,12 @@ for t in ${NODES_COUNT[@]}; do
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP":$file_ITF $file_ITF
     MAC=`cat $file_MAC`
     ITF=`cat $file_ITF`
+    cat /tmp/MAC
+    cat /tmp/ITF
     localfile="/tmp/10-$ITF.txt"
     netfile="10-$ITF"
+    echo $localfile
+    echo $netfile
     cp -f net-ubuntu.tmpl "$localfile"
     echo ${NODE_LABEL}" ip="$NODE_MAIN_IP" setup private interface "${NODE_INTERNAL_IP}
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
