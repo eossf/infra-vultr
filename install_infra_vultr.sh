@@ -232,7 +232,7 @@ file_inventory_node="/tmp/kube_node"
 
 NODES=`curl -s "https://api.vultr.com/v2/instances" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
 NODES_COUNT=`echo $NODES | jq '.instances' | grep -i '"id"' | tr -d "," | cut -d ":" -f2 | tr -d " " | tr -d '"'`
-for t in ${NODES_COUNT[@]}; do
+#for t in ${NODES_COUNT[@]}; do
   NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
   NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
   NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
@@ -242,7 +242,7 @@ for t in ${NODES_COUNT[@]}; do
   # second on private ips
   remove_file "$file_inventory_master" "$file_inventory_node"
   create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
-done
+#done
 
 echo
 echo "End of script"
