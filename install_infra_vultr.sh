@@ -86,44 +86,45 @@ echo " ----------------------------"
 echo "Get SSH key for accessing servers"
 SSHKEY_ID=`curl -s "https://api.vultr.com/v2/ssh-keys"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.ssh_keys[].id' | tr -d '"'`
 
-echo "🐇 Create masters and nodes"
-echo " ----------------------------"
-for node in $nodelist
-do
-  if [[ ${node} =~ "CONSOLE" ]]; then
-    plan=$plan_console
-    ((number_node++))
-  fi
-  if [[ ${node} =~ "MASTER" ]]; then
-    plan=$plan_master
-    ((number_node++))
-  fi
-  if [[ ${node} =~ "NODE" ]]; then 
-    plan=$plan_node
-    ((number_node++))
-  fi
-DATA='{"region":"'$region'",
-"plan":"'$plan'",
-"label":"'$node'",
-"hostname":"'$node'",
-"os_id":'$osid',
-"attach_private_network":["'$APN'"],
-"sshkey_id":["'$SSHKEY_ID'"]
-}'
+# echo "🐇 Fast creation of masters and nodes 🐇"
+# echo " ----------------------------"
+# for node in $nodelist
+# do
+#   if [[ ${node} =~ "CONSOLE" ]]; then
+#     plan=$plan_console
+#     ((number_node++))
+#   fi
+#   if [[ ${node} =~ "MASTER" ]]; then
+#     plan=$plan_master
+#     ((number_node++))
+#   fi
+#   if [[ ${node} =~ "NODE" ]]; then 
+#     plan=$plan_node
+#     ((number_node++))
+#   fi
+# DATA='{"region":"'$region'",
+# "plan":"'$plan'",
+# "label":"'$node'",
+# "hostname":"'$node'",
+# "os_id":'$osid',
+# "attach_private_network":["'$APN'"],
+# "sshkey_id":["'$SSHKEY_ID'"]
+# }'
 
-  echo $DATA
-  echo "Create node: $node"
-  curl -s "https://api.vultr.com/v2/instances" -X POST -H "Authorization: Bearer ${VULTR_API_KEY}" -H "Content-Type: application/json" --data "${DATA}"
-  echo
-done
+#   #echo $DATA
+#   echo "Create node: $node"
+#   curl -s "https://api.vultr.com/v2/instances" -X POST -H "Authorization: Bearer ${VULTR_API_KEY}" -H "Content-Type: application/json" --data "${DATA}"
+#   echo
+# done
 
-nseconds=$((30+number_node*20))
-echo "Wait provisionning finishes ... $nseconds seconds"
-echo " ----------------------------"
-sleep $nseconds
-echo
+# nseconds=$((30+number_node*20))
+# echo
+# echo " ⌛⌛⌛ Wait provisionning finishes ... $nseconds seconds ⌛⌛⌛"
+# echo " ----------------------------"
+# sleep $nseconds
+# echo
 
-echo "Get Nodes and set internal interface "
+echo "👺 Get Nodes and 🤖 set internal interface "
 NODES=`curl -s "https://api.vultr.com/v2/instances" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
 NODES_COUNT=`echo $NODES | jq '.instances' | grep -i '"id"' | tr -d "," | cut -d ":" -f2 | tr -d " " | tr -d '"'`
 for t in ${NODES_COUNT[@]}; do
