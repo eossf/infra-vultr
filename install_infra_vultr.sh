@@ -165,6 +165,12 @@ function remove_file()
 
 function create_inventory()
 {
+  # get info back for ansible provisionning
+  NODES=`curl -s "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
+  NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
+  NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
+  NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
+
   local inventory=$1
   local ips=$2
 
@@ -225,12 +231,6 @@ echo '
 echo " ---------------------------------"
 echo " 🗻 Prepare files for Ansible ..."
 echo " ---------------------------------"
-
-# get info back for ansible provisionning
-NODES=`curl -s "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
-NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
-NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
-NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
 
 # temp file
 file_inventory_master="/tmp/kube_master"
