@@ -178,13 +178,14 @@ function create_inventory() {
   i=0
   for ip in $ips
   do
-      echo "Public current ip is: $ip"
+      echo "IP read is: $ip"
       if valid_ip $ip; then
           if [[ $ip == "0.0.0.0" ]]; then
               echo "Host bad IP: ${HOSTNAME[$i]}"
               stat='bad'
           else
               stat='good'
+              echo " HOSTNAME IS ${HOSTNAME[$i]} "
               if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
                 echo "Insertion into $inventory of MASTER ${HOSTNAME[$i]}"
 echo '
