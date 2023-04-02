@@ -165,12 +165,6 @@ NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
 NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
 NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
 
-echo "NODE              = $NODE"
-echo "NODES_LABEL       = $NODES_LABEL"
-echo "NODES_MAIN_IP     = $NODES_MAIN_IP"
-echo "NODES_INTERNAL_IP = $NODES_INTERNAL_IP"
-
-
 function remove_file()
 {
   local remove_master=$1
