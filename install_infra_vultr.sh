@@ -3,13 +3,16 @@
 # default value
 DEFAULTNODELIST="MASTER01 NODE01 "
 
-# ubuntu 21.10
-UBUNTU="517"
+# ubuntu 22.10
+UBUNTU="1946"
+# "id": 1946,
+# "name": "Ubuntu 22.10 x64",
 
 # centos9 Stream x64
 CENTOS="542"
 # "id": 542,
 # "name": "CentOS 9 Stream x64",
+
 plan_console="vc2-1c-2gb"
 plan_master="vc2-2c-4gb"
 plan_node="vc2-1c-2gb"
@@ -83,7 +86,7 @@ echo " ----------------------------"
 echo "Get SSH key for accessing servers"
 SSHKEY_ID=`curl -s "https://api.vultr.com/v2/ssh-keys"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.ssh_keys[].id' | tr -d '"'`
 
-echo "Create masters and nodes"
+echo "🐇 Create masters and nodes"
 echo " ----------------------------"
 for node in $nodelist
 do
@@ -108,7 +111,8 @@ DATA='{"region":"'$region'",
 "sshkey_id":["'$SSHKEY_ID'"]
 }'
 
-  echo "Create node:"$node
+  echo $DATA
+  echo "Create node: $node"
   curl -s "https://api.vultr.com/v2/instances" -X POST -H "Authorization: Bearer ${VULTR_API_KEY}" -H "Content-Type: application/json" --data "${DATA}"
   echo
 done
