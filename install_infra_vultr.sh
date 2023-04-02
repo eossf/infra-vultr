@@ -6,8 +6,10 @@ DEFAULTNODELIST="MASTER01 NODE01 "
 # ubuntu 21.10
 UBUNTU="517"
 
-# centos8 x64
-CENTOS="362"
+# centos9 Stream x64
+CENTOS="542"
+# "id": 542,
+# "name": "CentOS 9 Stream x64",
 plan_console="vc2-1c-2gb"
 plan_master="vc2-2c-4gb"
 plan_node="vc2-1c-2gb"

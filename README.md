@@ -1,5 +1,8 @@
 # K3s ansible on Vultr
 
+# you need jq git
+apt -y install git jq
+
 ## -- Get repository with  read-write access
 ````
 ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa; git clone git@github.com:eossf/infra-vultr.git'
@@ -9,9 +12,6 @@ git config --global user.email "stephane.metairie@gmail.com"
 ## -- Create machine "console01" in VULTR infra
 ### script creating the console
 ````
-# you need jq 
-apt -y install jq
-
 export  VULTR_API_KEY="YYYY"
 ./install_infra_vultr.sh "CONSOLE01"
 ````
@@ -32,7 +32,7 @@ ssh -i ~/.ssh/id_rsa root@PUB_IP_CONSOLE01
 Then clone the repo infra-vultr and install:
 ````
 export  VULTR_API_KEY="YYYY"
-apt -y install jq
+apt -y install jq git
 # accept the key
 git clone git@github.com:eossf/infra-vultr.git
 cd infra-vultr
