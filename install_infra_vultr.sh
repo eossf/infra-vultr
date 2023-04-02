@@ -133,27 +133,15 @@ for t in ${NODES_COUNT[@]}; do
   NODE_INTERNAL_IP=`echo $NODE | jq '.instance.internal_ip' | tr -d '"'`
   NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
   if [[ ${node} =~ "MASTER" || ${node} =~ "NODE" ]]; then
-    echo "----------------------------"
-    echo "NODE             = $NODE"
-    echo "NODE_LABEL       = $NODE_LABEL"
-    echo "NODE_INTERNAL_IP = $NODE_INTERNAL_IP"
-    echo "NODE_MAIN_IP     = $NODE_MAIN_IP"
-    echo "-----------------------------"
-    echo "    ❤️ Ubuntu Linux detected"
+    echo "    ❤️ Ubuntu Linux detected ${NODE_MAIN_IP} / ${NODE_INTERNAL_IP}"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -iA2 '3: enp' | grep -i 'link/ether' | cut -d' ' -f6 > $file_MACADDRESS"
     ssh -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP" "ip a | grep -i '3: enp' | cut -d':' -f2 | tr -d ' ' > $file_NETINTERFACE"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP:$file_MACADDRESS $file_MACADDRESS"
     scp -i ~/.ssh/id_rsa -o "StrictHostKeyChecking=no" root@"$NODE_MAIN_IP:$file_NETINTERFACE $file_NETINTERFACE"
     MACADDRESS=`cat $file_MACADDRESS`
     NETINTERFACE=`cat $file_NETINTERFACE`
-    echo $MACADDRESS
-    echo $NETINTERFACE
-    cat $file_MACADDRESS
-    cat $file_NETINTERFACE
     localfile="/tmp/10-$NETINTERFACE.txt"
     netfile="10-$NETINTERFACE"
-    echo $localfile
-    echo $netfile
     cp -f net-ubuntu.tmpl "$localfile"
     echo "  🖧 - NODE ${NODE_LABEL} ip=${NODE_MAIN_IP} setup private interface ${NODE_INTERNAL_IP}"
     sed -i 's/#IPV4#/'${NODE_INTERNAL_IP}'/g' "$localfile"
