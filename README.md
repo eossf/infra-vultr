@@ -10,6 +10,9 @@ git config --global user.email "stephane.metairie@gmail.com"
 ````
 
 ## -- Create machine "console01" in VULTR infra
+
+ -- DONT FORGET TO ATTACHE VPC NETWORK --
+
 ### script creating the console
 ````
 export  VULTR_API_KEY="YYYY"

@@ -187,6 +187,9 @@ function create_inventory() {
               stat='good'
               echo " HOSTNAME IS ${HOSTNAME[$i]} "
               if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
+                echo "We won't insert CONSOLE ${HOSTNAME[$i]}"
+              fi
+              if [[ ${HOSTNAME[$i]}  =~ "MASTER" ]]; then
                 echo "Insertion into $inventory of MASTER ${HOSTNAME[$i]}"
 echo '
       #KUBE_MASTER_HOSTNAME:
