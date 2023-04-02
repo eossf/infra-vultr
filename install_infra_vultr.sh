@@ -134,10 +134,10 @@ for t in ${NODES_COUNT[@]}; do
   NODE_MAIN_IP=`echo $NODE | jq '.instance.main_ip' | tr -d '"'`
 
   echo "----------------------------"
-  echo $NODE
-  echo $NODE_LABEL
-  echo $NODE_INTERNAL_IP
-  echo $NODE_MAIN_IP
+  echo "NODE             = $NODE"
+  echo "NODE_LABEL       = $NODE_LABEL"
+  echo "NODE_INTERNAL_IP = $NODE_INTERNAL_IP"
+  echo "NODE_MAIN_IP     = $NODE_MAIN_IP"
   echo "-----------------------------"
 
   if [[ $osid == "$CENTOS" ]]; then
