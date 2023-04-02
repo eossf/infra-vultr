@@ -165,13 +165,7 @@ function remove_file()
 
 function create_inventory()
 {
-  # get info back for ansible provisionning
-  NODES=`curl -s "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
-  NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
-  NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
-  NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
-
-  local inventory=$1
+local inventory=$1
   local ips=$2
 
   HOSTNAME=()
@@ -236,13 +230,19 @@ echo " ---------------------------------"
 file_inventory_master="/tmp/kube_master"
 file_inventory_node="/tmp/kube_node"
 
-# first inventory on pub ips
-remove_file "$file_inventory_master" "$file_inventory_node"
-create_inventory "inventory-public.yml" "$NODES_MAIN_IP"
-# second on private ips
-remove_file "$file_inventory_master" "$file_inventory_node"
-create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
-
+NODES=`curl -s "https://api.vultr.com/v2/instances" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
+NODES_COUNT=`echo $NODES | jq '.instances' | grep -i '"id"' | tr -d "," | cut -d ":" -f2 | tr -d " " | tr -d '"'`
+for t in ${NODES_COUNT[@]}; do
+  NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
+  NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
+  NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
+  # first inventory on pub ips
+  remove_file "$file_inventory_master" "$file_inventory_node"
+  create_inventory "inventory-public.yml" "$NODES_MAIN_IP"
+  # second on private ips
+  remove_file "$file_inventory_master" "$file_inventory_node"
+  create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
+done
 
 echo
 echo "End of script"
