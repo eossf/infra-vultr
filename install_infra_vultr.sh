@@ -40,8 +40,7 @@ fi
 
 VULTR_API_KEY=$vultrapikey
 
-function valid_ip()
-{
+function valid_ip() {
     local  ip=$1
     local  stat=1
 
@@ -151,8 +150,7 @@ SSHKEY_ID=`curl -s "https://api.vultr.com/v2/ssh-keys"   -X GET   -H "Authorizat
 # done
 
 
-function remove_file()
-{
+function remove_file() {
   local remove_master=$1
   local remove_node=$2
   if [ -f "$remove_master" ]; then
@@ -163,9 +161,8 @@ function remove_file()
   fi
 }
 
-function create_inventory()
-{
-local inventory=$1
+function create_inventory() {
+  local inventory=$1
   local ips=$2
 
   HOSTNAME=()
@@ -233,17 +230,16 @@ file_inventory_node="/tmp/kube_node"
 
 NODES=`curl -s "https://api.vultr.com/v2/instances" -X GET -H "Authorization: Bearer ${VULTR_API_KEY}" | jq '.'`
 NODES_COUNT=`echo $NODES | jq '.instances' | grep -i '"id"' | tr -d "," | cut -d ":" -f2 | tr -d " " | tr -d '"'`
-#for t in ${NODES_COUNT[@]}; do
-  NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
-  NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
-  NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
-  # first inventory on pub ips
-  remove_file "$file_inventory_master" "$file_inventory_node"
-  create_inventory "inventory-public.yml" "$NODES_MAIN_IP"
-  # second on private ips
-  remove_file "$file_inventory_master" "$file_inventory_node"
-  create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
-#done
+NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
+NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
+NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
+
+# first inventory on pub ips
+remove_file "$file_inventory_master" "$file_inventory_node"
+create_inventory "inventory-public.yml" "$NODES_MAIN_IP"
+# second on private ips
+remove_file "$file_inventory_master" "$file_inventory_node"
+create_inventory "inventory-private.yml" "$NODES_INTERNAL_IP"
 
 echo
 echo "End of script"
