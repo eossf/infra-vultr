@@ -173,12 +173,12 @@ function create_inventory() {
   done
 
   echo " ---------------------------------"
-  echo " Print out inventory file: $inventory for public ip list: $ips"
+  echo " Print out inventory file: $inventory for public ip list: [ $ips ]"
   echo " ----------------------------"
   i=0
   for ip in $ips
   do
-      echo "IP read is: $ip"
+      echo "IP read is: [ $ip ]"
       if valid_ip $ip; then
           if [[ $ip == "0.0.0.0" ]]; then
               echo "Host bad IP: ${HOSTNAME[$i]}"
