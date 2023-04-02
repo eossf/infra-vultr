@@ -21,8 +21,6 @@ region="cdg"
 number_node=0
 
 # temp file
-file_inventory_master="/tmp/kube_master"
-file_inventory_node="/tmp/kube_node"
 file_NETINTERFACE="/tmp/NETINTERFACE"
 file_MACADDRESS="/tmp/MACADDRESS"
 
@@ -158,10 +156,10 @@ function remove_file()
   local remove_master=$1
   local remove_node=$2
   if [ -f "$remove_master" ]; then
-    rm $remove_master
+    rm "$remove_master"
   fi
   if [ -f "$remove_node" ]; then
-    rm $remove_node
+    rm "$remove_node"
   fi
 }
 
@@ -233,6 +231,10 @@ NODES=`curl -s "https://api.vultr.com/v2/instances"   -X GET   -H "Authorization
 NODES_LABEL=`echo $NODES | jq '.instances[].label' | tr -d '"'`
 NODES_MAIN_IP=`echo $NODES | jq '.instances[].main_ip' | tr -d '"'`
 NODES_INTERNAL_IP=`echo $NODES | jq '.instances[].internal_ip' | tr -d '"'`
+
+# temp file
+file_inventory_master="/tmp/kube_master"
+file_inventory_node="/tmp/kube_node"
 
 # first inventory on pub ips
 remove_file "$file_inventory_master" "$file_inventory_node"
