@@ -13,3 +13,6 @@ docker-compose
 .bak
 .tmp
 config
+.lock
+.terraform*
+*.tfstate
